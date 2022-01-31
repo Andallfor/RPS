@@ -127,7 +127,7 @@ os.system('cls' if os.name == 'nt' else 'clear')
 print("started")
 index = 0
 while (True):
-    img = m.update(index, image=True)
+    img = m.update(0, image=True)
     
     index += 1
     cv2.imshow('', img)
