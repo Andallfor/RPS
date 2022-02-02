@@ -5,13 +5,12 @@ import skimage.measure
 from box import box, point
 import objectDetection
 import SNMS
-from typing import Tuple, List
-import time
-import json
+from typing import Tuple, List, Any, Type
 import math
 from skimage.segmentation import mark_boundaries, felzenszwalb as flz
 import matplotlib.pyplot as plt
 import os
+from nptyping import NDArray
 
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
@@ -28,7 +27,7 @@ class main:
         self.v.set(3, self.width)
         self.v.set(4, self.height)
     
-    def update(self, index, image=True):
+    def update(self, index, image: bool=True):
         baseI = self.v.read()[1]
         poolI = skimage.measure.block_reduce(baseI, (self.poolSize, self.poolSize, 1), np.max)
         pixels = objectDetection.superPixels(poolI, 5, 100, 3, 25, index)
@@ -38,7 +37,7 @@ class main:
             # no solution
             return skimage.measure.block_reduce(baseI, (2, 2, 1), np.max)
 
-        solution = SNMS.method2(boxes, self.threshold, count=3)
+        solution = SNMS.snms(boxes, self.threshold, count=3)
         if image:
             #baseI = mark_boundaries(baseI, flz(baseI, 150, 3, 100))
             lineI = SNMS.drawOutline(solution, self.poolSize, skimage.measure.block_reduce(baseI, (2, 2, 1), np.max))
@@ -61,25 +60,7 @@ class main:
         else:
             return solution
     
-    def saveFrame(self, boxes):
-        name: str = str(int(time.time())) + '.json'
-        
-        f = open(name, 'w')
-        data = dict()
-        data['length'] = len(boxes)
-        
-        _d = dict()
-        for i, _b in enumerate(boxes):
-            b = [_b.position.x, _b.position.y, _b.size, _b.data]
-            d = b[3].flatten()
-            d = d.astype(str)
-            _d[i] = {'x': int(b[0]), 'y': int(b[1]), 'size': int(b[2]), 'data': [i for i in d]}
-        
-        data[int(time.time())] = _d
-            
-        f.write(json.dumps(data))
-    
-    def findDist(self, boxes):
+    def findDist(self, boxes: List[box])->List[Tuple[point, float, float]]:
         _a = 0.0133414
         _b = 32.3227
         _c = 1.68011
@@ -115,7 +96,7 @@ class main:
         
         return data
 
-    def standardize(self, boxes):
+    def standardize(self, boxes: List[box])->List[Tuple[int, int, NDArray[(Any,Any,3), int]]]:
         return [(b.position.x / (b.size / 32), b.position.y / (b.size / 32), cv2.resize(b.data, (32, 32))) for b in boxes]
 
 m = main(5, [16, 32, 48, 64], 1000000000000000)
