@@ -35,7 +35,7 @@ class main:
         solution = SNMS.snms(boxes, self.threshold, count=3)
         
         pixelI = SNMS.drawPixels(pixels)
-        boxesI = SNMS.drawOutline(solution, self.poolSize, skimage.measure.block_reduce(baseI, (2, 2, 1), np.max))
+        boxesI = SNMS.drawBoxes(solution, self.poolSize, baseI)
 
         if len(boxes) == 0: # no solution
             return None
@@ -45,7 +45,7 @@ class main:
         for d in data:
             lineI = cv2.putText(lineI, 
                                 str(d[1]) + '|' + str(d[2]),
-                                (int(d[0].x * self.poolSize / 2), int(d[0].y * self.poolSize / 2)),
+                                (int(d[0].x * self.poolSize), int(d[0].y * self.poolSize)),
                                 cv2.FONT_HERSHEY_COMPLEX_SMALL,
                                 1,
                                 (255, 0, 0))
@@ -113,5 +113,8 @@ os.system('cls' if os.name == 'nt' else 'clear')
 print("started")
 while (True):
     f = m.update()
+    
+    if f is None:
+        continue
     
     f.displayAll()

@@ -1,3 +1,4 @@
+from multiprocessing import pool
 import numpy as np
 import math
 from box import *
@@ -31,19 +32,19 @@ def snms(b: Dict[Tuple[int, int], box], t: float, count: int=5)->List[box]:
 
     return solutions[0:count]
 
-# TODO: rewrite so it can use all sizes
-def drawOutline(boxes: List[box], poolSize: int, img: picture)->picture:
+def drawBoxes(boxes: List[box], poolSize: int, img: picture)->picture:
     for b in boxes:
-        row, column = int(b.position.y * (poolSize / 2)), int(b.position.x * (poolSize / 2))
-        shape = (int(b.size * (poolSize / 2)), int(b.size * (poolSize / 2)))
+        x = b.position.x * poolSize
+        y = b.position.y * poolSize
+        length = b.size * poolSize
         
         bgr = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
-        for r in range(shape[0]):
-            img[row + r, column] = bgr
-            img[row + r, column + shape[1]] = bgr
-        for c in range(shape[1]):
-            img[row, column + c] = bgr
-            img[row + shape[0], column + c] = bgr
+        for a in range(length):
+            img[y + a, x] = bgr
+            img[y + a, x + length] = bgr
+        for b in range(length):
+            img[y, x + b] = bgr
+            img[y + length, x + b] = bgr
     return img
 
 def drawPixels(pixels: List[superPixel])->picture:
