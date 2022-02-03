@@ -32,13 +32,13 @@ class main:
         pixels = objectDetection.superPixels(poolI, 5, 100, 3, 25)
         boxes = objectDetection.drawBoxes(poolI, self.sizes, pixels)
         
-        solution = SNMS.snms(boxes, self.threshold, count=3)
+        if len(boxes) == 0: # no solution
+            return None
+        
+        solution = SNMS.snms(boxes, self.threshold)
         
         pixelI = SNMS.drawPixels(pixels)
         boxesI = SNMS.drawBoxes(solution, self.poolSize, baseI)
-
-        if len(boxes) == 0: # no solution
-            return None
         
         lineI = np.array(boxesI)
         data = self.findDist(solution)

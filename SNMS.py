@@ -14,13 +14,16 @@ def iou(box1: box, box2: box)->float:
     return intersection / union
 
 # TODO: replace with returning all boxes above a certain threshold
-def snms(b: Dict[Tuple[int, int], box], t: float, count: int=5)->List[box]:
+def snms(b: Dict[Tuple[int, int], box], t: float, score: float = 0.05)->List[box]:
     b = dict(b)
     
     solutions = []
-    for i in range(count):
+    for i in range(len(b.values())):
         bi = max(b.values(), key = lambda b: b.value)
-        solutions.append(bi)
+        if (bi.value > score):
+            solutions.append(bi)
+        else:
+            break
         b.pop((bi.position.x, bi.position.y))
 
         # create shallow copy to prevent linking
@@ -30,7 +33,7 @@ def snms(b: Dict[Tuple[int, int], box], t: float, count: int=5)->List[box]:
             if iouScore < t:
                 bj.value = bj.value * (1 - iouScore)
 
-    return solutions[0:count]
+    return solutions
 
 def drawBoxes(boxes: List[box], poolSize: int, img: picture)->picture:
     for b in boxes:
