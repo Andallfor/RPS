@@ -1,6 +1,6 @@
 import numpy as np
-import cv2
-from box import box
+import math
+from box import *
 import random
 from typing import Dict, Tuple, List, Any
 from nptyping import NDArray
@@ -31,7 +31,8 @@ def snms(b: Dict[Tuple[int, int], box], t: float, count: int=5)->List[box]:
 
     return solutions[0:count]
 
-def drawOutline(boxes: List[box], poolSize: int, img: NDArray[(Any,Any,3), int])->NDArray[(Any,Any,3), int]:
+# TODO: rewrite so it can use all sizes
+def drawOutline(boxes: List[box], poolSize: int, img: picture)->picture:
     for b in boxes:
         row, column = int(b.position.y * (poolSize / 2)), int(b.position.x * (poolSize / 2))
         shape = (int(b.size * (poolSize / 2)), int(b.size * (poolSize / 2)))
@@ -43,4 +44,15 @@ def drawOutline(boxes: List[box], poolSize: int, img: NDArray[(Any,Any,3), int])
         for c in range(shape[1]):
             img[row, column + c] = bgr
             img[row + shape[0], column + c] = bgr
+    return img
+
+def drawPixels(pixels: List[superPixel])->picture:
+    # just uses the full mask lol
+    fullMask: pixel2D = pixels[0].fullMask
+    img = np.ones(shape=(fullMask.shape[0], fullMask.shape[1], 3), dtype=float)
+    
+    count = 1 / len(pixels)
+    for index, x in np.ndenumerate(fullMask):
+        img[index] = [count * x, count * x, count * x]
+
     return img

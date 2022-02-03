@@ -1,8 +1,11 @@
 import numpy as np
 from nptyping import NDArray
+import cv2
 from typing import Any, List, Type
 
 pixel = Type[NDArray[(Any,Any,3), int]]
+pixel2D = Type[NDArray[(Any,Any), int]]
+picture = Type[NDArray[(Any,Any,3), int]]
 
 class point:
     def __init__(self, x: float, y: float):
@@ -49,13 +52,29 @@ class box:
     def _avg(self, minPoint: point, maxPoint: point):
         return point((maxPoint.x + minPoint.x) / 2, ((maxPoint.y + minPoint.y) / 2))
 
+class frame:
+    def __init__(self, base: picture, pool: picture, pixel: picture, boxes: picture, estimate: picture, solution: List[box]):
+        self.base: picture = base
+        self.pool: picture = pool
+        self.pixel: picture = pixel
+        self.boxes: picture = boxes
+        self.estimate: picture = estimate
+        self.solution: List[box] = solution
+    
+    def displayAll(self):
+        #cv2.imshow('base', self.base)
+        #cv2.imshow('pooled', self.pool)
+        cv2.imshow('pixels', self.pixel)
+        #cv2.imshow('boxes', self.boxes)
+        cv2.imshow('estimated', self.estimate)
+        cv2.waitKey(0)
 
 class superPixel:
-    def __init__(self, key: int, position: point, outline: NDArray[(Any,Any), int], fullMask: NDArray[(Any,Any), int]):
+    def __init__(self, key: int, position: point, outline: pixel2D, fullMask: pixel2D):
         self.key: int = key
         self.position: point = position
-        self.outline: NDArray[(Any,Any), int] = outline
-        self.fullMask: NDArray[(Any,Any), int] = fullMask
+        self.outline: pixel2D = outline
+        self.fullMask: pixel2D = fullMask
     
     def withinBox(self, minX: point, minY: point, maxX: point, maxY: point)->bool:
         return self.position.x > minX and\

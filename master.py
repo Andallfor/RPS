@@ -2,13 +2,11 @@ from matplotlib.font_manager import json_dump
 import numpy as np
 import cv2
 import skimage.measure
-from box import box, point
+from box import *
 import objectDetection
 import SNMS
-from typing import Tuple, List, Any, Type
+from typing import Tuple, List, Any, Union
 import math
-from skimage.segmentation import mark_boundaries, felzenszwalb as flz
-import matplotlib.pyplot as plt
 import os
 from nptyping import NDArray
 
@@ -27,38 +25,45 @@ class main:
         self.v.set(3, self.width)
         self.v.set(4, self.height)
     
-    def update(self, index, image: bool=True):
-        baseI = self.v.read()[1]
-        poolI = skimage.measure.block_reduce(baseI, (self.poolSize, self.poolSize, 1), np.max)
-        pixels = objectDetection.superPixels(poolI, 5, 100, 3, 25, index)
+    def update(self)->Union[frame, None]:
+        baseI: picture = self.v.read()[1]
+        poolI: picture = skimage.measure.block_reduce(baseI, (self.poolSize, self.poolSize, 1), np.max)
         
+        pixels = objectDetection.superPixels(poolI, 5, 100, 3, 25)
         boxes = objectDetection.drawBoxes(poolI, self.sizes, pixels)
-        if len(boxes) == 0:
-            # no solution
-            return skimage.measure.block_reduce(baseI, (2, 2, 1), np.max)
-
+        
         solution = SNMS.snms(boxes, self.threshold, count=3)
-        if image:
-            #baseI = mark_boundaries(baseI, flz(baseI, 150, 3, 100))
-            lineI = SNMS.drawOutline(solution, self.poolSize, skimage.measure.block_reduce(baseI, (2, 2, 1), np.max))
-            data = self.findDist(solution)
-            for d in data:
-                lineI = cv2.putText(lineI, 
-                                    str(d[1]) + '|' + str(d[2]),
-                                    (int(d[0].x * self.poolSize / 2), int(d[0].y * self.poolSize / 2)),
-                                    cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                                    1,
-                                    (255, 0, 0))
-            # draw equation line
-            n = 5
-            d = 8
-            for i in range(n + 1):
-                x = int(lineI.shape[1] / 2)
-                y = lineI.shape[0] - int((lineI.shape[0] / 2) * (i / n))
-                lineI = cv2.putText(lineI, f'- {i / n}', (x, y), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 0, 255))
-            return lineI
-        else:
-            return solution
+        
+        pixelI = SNMS.drawPixels(pixels)
+        boxesI = SNMS.drawOutline(solution, self.poolSize, skimage.measure.block_reduce(baseI, (2, 2, 1), np.max))
+
+        if len(boxes) == 0: # no solution
+            return None
+        
+        lineI = np.array(boxesI)
+        data = self.findDist(solution)
+        for d in data:
+            lineI = cv2.putText(lineI, 
+                                str(d[1]) + '|' + str(d[2]),
+                                (int(d[0].x * self.poolSize / 2), int(d[0].y * self.poolSize / 2)),
+                                cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                                1,
+                                (255, 0, 0))
+        # draw equation line
+        n = 5
+        d = 8
+        for i in range(n + 1):
+            x = int(lineI.shape[1] / 2)
+            y = lineI.shape[0] - int((lineI.shape[0] / 2) * (i / n))
+            lineI = cv2.putText(lineI, f'- {i / n}', (x, y), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5, (0, 0, 255))
+        
+        return frame(
+            base=baseI,
+            pool=poolI,
+            pixel=pixelI,
+            boxes=boxesI,
+            estimate=lineI,
+            solution=solution)
     
     def findDist(self, boxes: List[box])->List[Tuple[point, float, float]]:
         _a = 0.0133414
@@ -101,17 +106,12 @@ class main:
 
 m = main(5, [16, 32, 48, 64], 1000000000000000)
 m.start()
-m.update(0, image=False)
+m.update()
 os.system('cls' if os.name == 'nt' else 'clear')
-m.update(0, image=False)
+m.update()
 os.system('cls' if os.name == 'nt' else 'clear')
 print("started")
-index = 0
 while (True):
-    img = m.update(0, image=True)
+    f = m.update()
     
-    index += 1
-    cv2.imshow('', img)
-    cv2.waitKey(0)
-#data = m.update(image=True)
-#m.saveFrame(data)
+    f.displayAll()

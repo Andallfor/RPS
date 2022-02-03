@@ -32,14 +32,9 @@ def drawBoxes(img: image, sizes: List[int], pixels: List[superPixel])->Dict[Tupl
                 boxes[(x, y)] = box(b, score, size, point(x, y), validPixels)
     return boxes
 
-def superPixels(img: image, poolSize: int, scale: int, sigma: float, minSize: int, index):
+def superPixels(img: image, poolSize: int, scale: int, sigma: float, minSize: int):
     img = cv2.GaussianBlur(img, (poolSize, poolSize), 0.5)
     segments = flz(img, scale=scale, sigma=sigma, min_size=minSize)
-    
-    if (index == 6):
-        fig = plt.figure(figsize=(12, 9))
-        plt.imshow(mark_boundaries(img[:,:,::-1], segments), )
-        plt.show()
     
     return segementToPixels(segments)
 
