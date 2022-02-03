@@ -31,22 +31,10 @@ print(image_input.size)
 ann = keras.models.load_model('training_1/cp.ckpt')
 ann.summary()
 predictedResults = ann.predict(image_input)
-predictedRound = []
-for i in range(len(predictedResults)):
-    predictedRound.append(predictedResults[i].round())
-predictedRound = list(map(int, predictedRound))
-
-#un-round, input whole dataset for prediction
-confidence = []
-for i in range(len(predictedRound)):
-    lowerBound = abs(predictedResults[i] - math.floor(predictedResults[i]))
-    upperBound = abs(predictedResults[i] - math.ceil(predictedResults[i]))
-    if lowerBound > upperBound:
-        confidence.append(upperBound)
-    elif upperBound > lowerBound:
-        confidence.append(lowerBound)
-    elif lowerBound == upperBound:
-        confidence.append(0.5)
-    else:
-        print("Oh no! \nThere was an issue in the confidence measuring section of the script. \nThe program will now abort")
-        sys.exit()
+predictedRound = np.array([[]])
+for x in range(np.size(predictedRound, 0)):
+    for y in range(np.size(predictedRound, 1)):
+        predictedRound.append(np.round_(predictedResults[i]), axis=1)
+#for i in range(np.size(predictedRound, 1)):
+    
+#prediction = largest
