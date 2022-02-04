@@ -26,10 +26,11 @@ class main:
         self.v.set(4, self.height)
     
     def update(self)->Union[frame, None]:
-        baseI: picture = self.v.read()[1]
+        #baseI: picture = self.v.read()[1]
+        baseI: picture = cv2.imread('test2.jpg')
         poolI: picture = skimage.measure.block_reduce(baseI, (self.poolSize, self.poolSize, 1), np.max)
         
-        pixels = objectDetection.superPixels(poolI, 5, 100, 3, 25)
+        pixels = objectDetection.superPixels(poolI, 5, 100, 0.8, 25)
         boxes = objectDetection.drawBoxes(poolI, self.sizes, pixels)
         
         if len(boxes) == 0: # no solution

@@ -9,28 +9,75 @@ from nptyping import NDArray
 
 image = Type[NDArray[(Any,Any,3), int]]
 
-def drawBoxes(img: image, sizes: List[int], pixels: List[superPixel])->Dict[Tuple[int,int], box]:
-    boxes = dict()
-    for x in range(0, 256, 4):
-        for y in range(0, 144, 4):
-            for size in sizes:
-                if x + size >= 256 or y + size >= 144:
-                    continue
-                    
-                b = img[y : y + size, x : x + size]
+def pixelScore(pixel: superPixel):
+    area = pixel.outline.shape[0] * pixel.outline.shape[1]
+    return -0.025 * area + 1000
+
+# comments? whats that?
+def drawBoxes(img: image, sizes: List[int], pixels: List[superPixel])->List[box]:
+    allBoxes = []
+    maxSize = 64
+    distanceIncrement = 2
+    for pixel in pixels:
+        # get center point
+        lx, ly = pixel.outline.shape
+        center: point = pixel.position + point(lx, ly)
+        
+        boxes = []
+        currentPixels: List[superPixel] = []
+        currentScore = 0
+        unaccountedPixels: List[superPixel] = list(pixels)
+        distance = distanceIncrement
+        buffer: List[superPixel] = []
+        # draw boxes
+        while True:
+            base = center - point(distance, distance)
+            length = distance * 2
+            
+            boundingBox = [base, point(base.x + length, base.y), point(base.x, base.y + length), point(base.x + length, base.y + length)]
+            
+            valid = True
+            for bb in boundingBox:
+                if bb.x <= 0 or bb.y <= 0 or bb.x >= img.shape[1] or bb.y >= img.shape[0]:
+                    valid = False
+                    break
                 
-                validPixels = []
-                score = 0
-                for p in pixels:
-                    if p.withinBox(x, y, x + size, y + size):
-                        score += 1
-                        validPixels.append(p)
-                score = score / math.pow(size, 0.75)
-                if score == 0:
-                    continue
-                
-                boxes[(x, y)] = box(b, score, size, point(x, y), validPixels)
-    return boxes
+                # find new pixels
+                for uPixel in list(unaccountedPixels):
+                    if uPixel.containsPoint(bb):
+                        buffer.append(uPixel)
+                        unaccountedPixels.remove(uPixel)
+                        currentScore += pixelScore(uPixel)
+                        break
+            
+            # for each superpixel in buffer, check if their fully inside our current box
+            for p in list(buffer):
+                if p.withinBox(base.x, base.y, base.x + length, base.y + length):
+                    currentPixels.append(p)
+                    buffer.remove(p)
+            #currentPixels += buffer
+            
+            # box left image, break
+            if not valid:
+                break
+            
+            if len(currentPixels) > 0:
+                boxes.append(box(
+                    data=img[base.y : base.y + length, base.x : base.x + length],
+                    value=math.log2(currentScore / (1.1 ** distance)),
+                    size=length,
+                    position=base,
+                    pixels=list(currentPixels)
+                ))
+            
+            distance += distanceIncrement
+            
+            # exceeded max length
+            if distance >= maxSize / 2:
+                break
+        allBoxes += boxes
+    
+    return allBoxes
 
 def superPixels(img: image, poolSize: int, scale: int, sigma: float, minSize: int):
     img = cv2.GaussianBlur(img, (poolSize, poolSize), 0.5)
