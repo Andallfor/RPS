@@ -34,16 +34,16 @@ predictions = predictions.tolist()
 validation_predictions = validation_predictions.tolist()
 n = 0
 for element in predictions:
-	predictions[n] = [element.index(max(element))]
+	predictions[n] = [element.index(max(element))] #makes the array at predictions n equal the index of the largest value in the array of probablities
 	n += 1
 
 n_2 = 0
 for element in validation_predictions:
-	validation_predictions[n_2] = [element.index(max(element))]
+	validation_predictions[n_2] = [element.index(max(element))] #same thing but with the testing images
 	n_2 += 1
 
 
-label_list = training_label.tolist()
+label_list = training_label.tolist() 
 validation_label_list = testing_label.tolist()
 
 training_prediction_labels = []
@@ -53,7 +53,7 @@ n_3 = 0
 for element in predictions:
 	label = label_list[n_3]
 	if element[0] == label[0]:
-		training_prediction_labels.append([1])
+		training_prediction_labels.append([1])#if the program guessed right, append array????
 	else:
 		training_prediction_labels.append([0])
 	n_3 += 1
@@ -61,8 +61,8 @@ for element in predictions:
 n_4 = 0
 for element in validation_predictions:
 	label = validation_label_list[n_4]
-	if element[0] == label[0]:
-		validation_prediction_labels.append([1])
+	if element[0] == label[0]:#if the prgram guessed right,
+		validation_prediction_labels.append([1])#lol i have no idea what's happening here and why we need to append that. Aren't we going to 
 	else:
 		validation_prediction_labels.append([0])
 	n_4 += 1
