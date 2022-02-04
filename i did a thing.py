@@ -31,10 +31,13 @@ print(image_input.size)
 ann = keras.models.load_model('training_1/cp.ckpt')
 ann.summary()
 predictedResults = ann.predict(image_input)
-predictedRound = np.array([[]])
-for x in range(np.size(predictedRound, 0)):
-    for y in range(np.size(predictedRound, 1)):
-        predictedRound.append(np.round_(predictedResults[i]), axis=1)
-#for i in range(np.size(predictedRound, 1)):
-    
-#prediction = largest
+
+prediction = []
+prediction = np.argmax(predictedResults, axis=1, out=None)
+#monkE fixEd this codE for you monkE scratch monkE back monkEEEEE
+class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck']
+
+labels = []
+for i in range(np.size(prediction)):
+    labels.append(class_names[prediction[i]])
