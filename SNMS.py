@@ -1,34 +1,29 @@
+from multiprocessing import pool
 import numpy as np
-import cv2
-from box import box
+import math
+from box import *
 import random
+from typing import Dict, Tuple, List, Any
+from nptyping import NDArray
 
-def iou(box1, box2):
+def iou(box1: box, box2: box)->float:
     xLap = max(0, min(box1.position.x + box1.size, box2.position.x + box2.size) - max(box1.position.x, box2.position.x))
     yLap = max(0, min(box1.position.y + box1.size, box2.position.y + box2.size) - max(box1.position.y, box2.position.y))
     intersection = xLap * yLap
     union = ((box1.size * box1.size) - intersection) + ((box2.size * box2.size) - intersection) + intersection
     return intersection / union
 
-def method1(b, count=5):
-    lBoxes = list(b.values())
-    
-    solutions = []
-    for i in range(count):
-        best = max(lBoxes, key = lambda b: b.value)
-        listPos = lBoxes.index(best)
-        del lBoxes[listPos - 2 : listPos + 1]
-        solutions.append(best)
-    
-    return solutions
-
-def method2(b, t, count=5):
+# TODO: replace with returning all boxes above a certain threshold
+def snms(b: Dict[Tuple[int, int], box], t: float, score: float = 0.05)->List[box]:
     b = dict(b)
     
     solutions = []
-    for i in range(count):
+    for i in range(len(b.values())):
         bi = max(b.values(), key = lambda b: b.value)
-        solutions.append(bi)
+        if (bi.value > score):
+            solutions.append(bi)
+        else:
+            break
         b.pop((bi.position.x, bi.position.y))
 
         # create shallow copy to prevent linking
@@ -38,18 +33,30 @@ def method2(b, t, count=5):
             if iouScore < t:
                 bj.value = bj.value * (1 - iouScore)
 
-    return solutions[0:count]
+    return solutions
 
-def drawOutline(boxes, poolSize, img):
+def drawBoxes(boxes: List[box], poolSize: int, img: picture)->picture:
     for b in boxes:
-        row, column = int(b.position.y * (poolSize / 2)), int(b.position.x * (poolSize / 2))
-        shape = (int(b.size * (poolSize / 2)), int(b.size * (poolSize / 2)))
+        x = b.position.x * poolSize
+        y = b.position.y * poolSize
+        length = b.size * poolSize
         
         bgr = [random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)]
-        for r in range(shape[0]):
-            img[row + r, column] = bgr
-            img[row + r, column + shape[1]] = bgr
-        for c in range(shape[1]):
-            img[row, column + c] = bgr
-            img[row + shape[0], column + c] = bgr
+        for a in range(length):
+            img[y + a, x] = bgr
+            img[y + a, x + length] = bgr
+        for b in range(length):
+            img[y, x + b] = bgr
+            img[y + length, x + b] = bgr
+    return img
+
+def drawPixels(pixels: List[superPixel])->picture:
+    # just uses the full mask lol
+    fullMask: pixel2D = pixels[0].fullMask
+    img = np.ones(shape=(fullMask.shape[0], fullMask.shape[1], 3), dtype=float)
+    
+    count = 1 / len(pixels)
+    for index, x in np.ndenumerate(fullMask):
+        img[index] = [count * x, count * x, count * x]
+
     return img
