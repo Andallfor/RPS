@@ -6,23 +6,19 @@ imports the model and runs predictions on it
 
 @author: hudso
 """
+
 import numpy as np #for arrays
-import pandas as pd #data manipulation and processing
-import sys
-import math
 import cv2 as cv
 from tensorflow import keras
-from joblib import load
-from sklearn.impute import SimpleImputer #fill out missing data
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import StandardScaler
 import glob
 
 #imoprt image
-image_input = np.asarray([cv.imread(file, 1) for file in glob.glob("dataset/*.jpg")])
+image_input = [cv.imread(file, 1) for file in glob.glob("dataset/*.jpg")]
+
 for i in range(0, np.size(image_input, 0)):
-    image_input = cv.resize(image_input[i], (32, 32), interpolation = cv.INTER_AREA)
-    image_input = np.expand_dims(image_input, 0)
+    iso_var = image_input[i]
+    image_input[i] = cv.resize(iso_var, (32, 32), interpolation = cv.INTER_AREA)
+image_input = np.asarray(image_input)
 image_input = image_input[:, :, :, [2, 1, 0]] #goes from weird BGR to RGB
 np.save("preprocessed_data", image_input)
 print(image_input.size)
@@ -33,7 +29,8 @@ ann.summary()
 predictedResults = ann.predict(image_input)
 
 prediction = []
-prediction = np.argmax(predictedResults, axis=1, out=None)
+for i in range(0, np.size(predictedResults, 0)):
+    prediction = np.argmax(predictedResults, axis=1, out=None)
 #monkE fixEd this codE for you monkE scratch monkE back monkEEEEE
 class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
