@@ -1,16 +1,13 @@
 #tar.gz is monkEEEEEEEE :() :() water monkE moment 
 import tensorflow as tf
-from keras import layers, models, datasets, metrics
+from keras import layers
 from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
 from keras.layers import BatchNormalization
-import matplotlib as plt
-import numpy as np
-#import cv2 as opencv
-from collections import Counter
 import ssl
 import sys
 import datetime
 
+#directory where it saves model
 checkpoint_path = "training_1/cp.ckpt"
 
 #Get the dataset ready monke :() :()
@@ -24,7 +21,7 @@ number_of_classes = 10
 data_augmentation = tf.keras.Sequential([
   layers.RandomFlip("horizontal_and_vertical"),
   layers.RandomRotation(0.2)
-  #layers.RandomContrast(0.2)
+  #layers.RandomRotation(0.2)
 ])
 
 #Creates the model
