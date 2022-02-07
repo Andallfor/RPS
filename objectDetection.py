@@ -14,7 +14,36 @@ def pixelScore(pixel: superPixel):
     return -0.025 * area + 1000
 
 # comments? whats that?
-def drawBoxes(img: image, sizes: List[int], pixels: List[superPixel])->List[box]:
+def boxes(img: image, sizes: List[int], pixels: List[superPixel])->List[box]:
+    threshold = 0.95
+    boxes = []
+    for pixel in pixels:
+        valid = np.count_nonzero(pixel.outline == pixel.key)
+        if valid / (pixel.outline.shape[0] * pixel.outline.shape[1]) >= threshold:
+            length = min(pixel.outline.shape[0], pixel.outline.shape[1]) - 1
+            
+            if length == 0:
+                continue
+            
+            insidePixels = [pixel]
+            for p in pixels:
+                # check for pixels inside
+                if p == pixel:
+                    continue
+                
+                if p.withinBox(pixel.position.x, pixel.position.y, pixel.position.x + length, pixel.position.y + length):
+                    insidePixels.append(p)
+            
+            boxes.append(box(
+                data=img[pixel.position.y : pixel.position.y + length, pixel.position.x : pixel.position.x + length],
+                value=100,
+                size=length,
+                position=pixel.position,
+                pixels=insidePixels
+            ))
+    return boxes
+    
+    '''
     allBoxes = []
     maxSize = 64
     distanceIncrement = 2
@@ -78,6 +107,7 @@ def drawBoxes(img: image, sizes: List[int], pixels: List[superPixel])->List[box]
         allBoxes += boxes
     
     return allBoxes
+    '''
 
 def superPixels(img: image, poolSize: int, scale: int, sigma: float, minSize: int):
     img = cv2.GaussianBlur(img, (poolSize, poolSize), 0.5)

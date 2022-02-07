@@ -26,13 +26,12 @@ def iou(box1: box, box2: box)->float:
     return intersection / union
     '''
 
-def snms(b: List[box], t: float, score: float = 10)->List[box]:
+def snms(b: List[box], t: float, score: float = 0)->List[box]:
     b = list(b)
     
     solutions = []
     for i in range(len(b)):
         bi = max(b, key = lambda b: b.value)
-        print(bi.value)
         if (bi.value > score):
             solutions.append(bi)
         else:
