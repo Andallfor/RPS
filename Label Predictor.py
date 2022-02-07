@@ -34,6 +34,7 @@ image_input = np.asarray(image_input)
 #changes from BGR to RGB and saves data
 image_input = image_input[:, :, :, [2, 1, 0]]
 np.save("preprocessed_data", image_input)
+image_input = image_input / 255
 
 #loads model and deencode
 ann = keras.models.load_model('training_1/cp.ckpt')
