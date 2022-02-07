@@ -15,13 +15,59 @@ class point:
     def __str__(self):
         return f"({self.x}, {self.y})"
 
+    def __add__(self, other):
+        return point(self.x + other.x, self.y + other.y)
+    
+    def __sub__(self, other):
+        return point(self.x - other.x, self.y - other.y)
+    
+    def __hash__(self):
+        # https://stackoverflow.com/questions/919612/mapping-two-integers-to-one-in-a-unique-and-deterministic-way
+        a = self.x * 2
+        b = self.y * 2
+        if self.x < 0:
+            a = -self.x * 2 - 1
+        if self.y < 0:
+            b = -self.y * 2 - 1
+        
+        return ((a + b) * (a + b + 1)) / 2 + b
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+class superPixel:
+    def __init__(self, key: int, position: point, outline: pixel2D, fullMask: pixel2D):
+        self.key: int = key
+        self.position: point = position
+        self.outline: pixel2D = outline
+        self.fullMask: pixel2D = fullMask
+    
+    def withinBox(self, minX: point, minY: point, maxX: point, maxY: point)->bool:
+        return self.position.x > minX and\
+               self.position.y > minY and\
+               self.position.x + self.outline.shape[0] < maxX and\
+               self.position.y + self.outline.shape[1] < maxY
+    
+    # is world position
+    def containsPoint(self, point: point)->bool:
+        return point.x > self.position.x and\
+               point.y > self.position.y and\
+               point.x < self.position.x + self.outline.shape[0] and\
+               point.y < self.position.y + self.outline.shape[1]
+    
+    def __hash__(self):
+        return self.key
+    
+    def __eq__(self, other):
+        return self.key == other.key
+
 class box:
-    def __init__(self, data: pixel, value: float, size: int, position: point, pixels: List[pixel]):
+    def __init__(self, data: pixel, value: float, size: int, position: point, pixels: List[superPixel]):
         self.data: pixel = data
         self.value: float = value
         self.position: point = position
         self.size: int = size
-        self.pixels: List[pixel] = pixels
+        self.pixels: List[superPixel] = pixels
         
         # combine pixels
         ll: point = point(pixels[0].position.x, pixels[0].position.y)
@@ -51,6 +97,12 @@ class box:
     
     def _avg(self, minPoint: point, maxPoint: point):
         return point((maxPoint.x + minPoint.x) / 2, ((maxPoint.y + minPoint.y) / 2))
+    
+    def __hash__(self):
+        return hash(self.position) ^ hash(self.size)
+    
+    def __eq__(self, other):
+        return self.position == other.position and self.size == other.size
 
 class frame:
     def __init__(self, base: picture, pool: picture, pixel: picture, boxes: picture, estimate: picture, solution: List[box]):
@@ -68,25 +120,6 @@ class frame:
         #cv2.imshow('boxes', self.boxes)
         cv2.imshow('estimated', self.estimate)
         cv2.waitKey(0)
-
-class superPixel:
-    def __init__(self, key: int, position: point, outline: pixel2D, fullMask: pixel2D):
-        self.key: int = key
-        self.position: point = position
-        self.outline: pixel2D = outline
-        self.fullMask: pixel2D = fullMask
-    
-    def withinBox(self, minX: point, minY: point, maxX: point, maxY: point)->bool:
-        return self.position.x > minX and\
-               self.position.y > minY and\
-               self.position.x + self.outline.shape[0] < maxX and\
-               self.position.y + self.outline.shape[1] < maxY
-    
-    def containsPoint(self, point: point)->bool:
-        return point.x > self.position.x and\
-               point.y > self.position.y and\
-               point.x < self.position.x + self.outline.shape[0] and\
-               point.y < self.position.y + self.outline.shape[1]
 
 if __name__ == '__main__':
     from objectDetection import segementToPixels

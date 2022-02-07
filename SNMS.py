@@ -7,28 +7,40 @@ from typing import Dict, Tuple, List, Any
 from nptyping import NDArray
 
 def iou(box1: box, box2: box)->float:
+    # https://www.pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
+    xA = max(box1.position.x, box2.position.x)
+    yA = max(box1.position.y, box2.position.y)
+    xB = min(box1.position.x + box1.size, box2.position.x + box2.size)
+    yB = min(box1.position.y + box1.size, box2.position.y + box2.size)
+    intersection = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+    area1 = ((box1.position.x + box1.size) - box1.position.x + 1) * ((box1.position.y + box1.size) - box1.position.y + 1)
+    area2 = ((box2.position.x + box2.size) - box2.position.x + 1) * ((box2.position.y + box2.size) - box2.position.y + 1)
+    
+    return intersection / float(area1 + area2 - intersection)
+    
+    '''
     xLap = max(0, min(box1.position.x + box1.size, box2.position.x + box2.size) - max(box1.position.x, box2.position.x))
     yLap = max(0, min(box1.position.y + box1.size, box2.position.y + box2.size) - max(box1.position.y, box2.position.y))
     intersection = xLap * yLap
     union = ((box1.size * box1.size) - intersection) + ((box2.size * box2.size) - intersection) + intersection
     return intersection / union
+    '''
 
-# TODO: replace with returning all boxes above a certain threshold
-def snms(b: Dict[Tuple[int, int], box], t: float, score: float = 0.05)->List[box]:
-    b = dict(b)
+def snms(b: List[box], t: float, score: float = 0)->List[box]:
+    b = list(b)
     
     solutions = []
-    for i in range(len(b.values())):
-        bi = max(b.values(), key = lambda b: b.value)
+    for i in range(len(b)):
+        bi = max(b, key = lambda b: b.value)
         if (bi.value > score):
             solutions.append(bi)
         else:
             break
-        b.pop((bi.position.x, bi.position.y))
+        b.remove(bi)
 
         # create shallow copy to prevent linking
-        boxesCopy = dict(b)
-        for bj in boxesCopy.values():
+        boxesCopy = list(b)
+        for bj in boxesCopy:
             iouScore = iou(bj, bi)
             if iouScore < t:
                 bj.value = bj.value * (1 - iouScore)
